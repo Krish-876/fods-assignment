@@ -1,0 +1,73 @@
+============================================================
+P3: Lasso via Subgradient Descent (Legendre basis)
+============================================================
+Train N=10, Test N=100
+cond(Phi^T Phi) = 6.1123e+02  (expect ~6e2)
+
+--- Deliverable 1: Detailed analysis at lam=0.1 ---
+  Final E  = 0.263570
+  Best E   = 0.262619
+  E - E*   = 0.001070   (E* = 0.2625)
+  ||w - w*||_2 = 0.007636
+  Note: constant-step subgradient descent produces iterates that chatter
+  around the optimum with amplitude ~eta*lam = 0.0050; this explains
+  the non-zero gap |E_final - E*| = 0.0011 and ||w-w*||.
+  w* is the 3-decimal reference from the assignment spec.
+  Saved: p3_d1a_convergence.png
+  Optimality (non-zero): max |Phi_j^T r - lam*sign(w_j)| = 1.435812e-02  (should be ~0)
+  Optimality (zero):     max |Phi_j^T r|/lam            = 0.683041  (should be <=1)
+  Non-zero coefficients (|w_j| >= 0.0100): indices [1, 2, 3, 4, 5, 7]
+  Zero     coefficients (|w_j| <  0.0100): indices [0, 6, 8, 9]
+
+--- Deliverable 2: RMSE sweep vs lam ---
+  Saved: p3_d2_rmse_sweep.png
+
+--- Deliverable 3: Coefficient path ---
+
+  lam           # ~zero coefs (|w_j| < 2*eta*lam)
+  --------------------------------------------------
+  1.0000e-04    0
+  1.5849e-04    0
+  2.5119e-04    0
+  3.9811e-04    0
+  6.3096e-04    0
+  1.0000e-03    0
+  1.5849e-03    0
+  2.5119e-03    0
+  3.9811e-03    0
+  6.3096e-03    0
+  1.0000e-02    1
+  1.5849e-02    3
+  2.5119e-02    3
+  3.9811e-02    4
+  6.3096e-02    4
+  1.0000e-01    4
+  1.5849e-01    6
+  2.5119e-01    7
+  3.9811e-01    8
+  6.3096e-01    8
+  1.0000e+00    8
+  Saved: p3_d3_coef_path.png
+
+--- Deliverable 4: Best lam (lam*) ---
+  lam* = 1.0000e-01
+  Test RMSE at lam* = 0.098544
+  Number of ~zero coefficients: 4
+  Indices of ~zero coefficients: [0, 6, 8, 9]
+
+--- Deliverable 5: Lasso vs Ridge comparison (Legendre basis) ---
+
+  Method         lam*         Test RMSE      ||w||_2      # coeffs with |w_j| < 0.01
+  ------------------------------------------------------------------------
+  Lasso          1.0000e-01   0.098544       1.4667       4
+  Ridge          1.5849e-01   0.142233       1.4406       1
+
+--- Deliverable 6: Fitted curves (Lasso vs Ridge at best lam) ---
+  Saved: p3_d6_fitted_curves.png
+
+--- Deliverable 7: Discussion ---
+  Monotonicity check for lam >= lam* = 1.0000e-01:
+    train RMSE strictly non-decreasing: True -> phrase: 'monotonically increase'
+    test  RMSE strictly non-decreasing: True  -> phrase: 'monotonically increase'
+
+  Discussion (P3): L1 regularisation (Lasso) produces exact zeros in the coefficient vector because the subdifferential optimality condition for a zero component j requires |Phi_j^T r| <= lam -- if the correlation of column j with the residual is small enough, the optimal solution is exactly w_j=0, i.e. the diamond-shaped L1 ball forces the solution to touch a corner/edge where some coordinates are zero. L2 regularisation (Ridge) only shrinks coefficients toward zero but generically never reaches exactly zero, because the L2 ball is smooth (no corners) and its gradient is proportional to w, becoming zero only if w=0 itself. As lam grows past lam* (lam*=1.00e-01 for Lasso), more coefficients are driven to zero, reducing model flexibility: the train RMSE tends to monotonically increase because the model cannot fit the data well, and the test RMSE tends to monotonically increase because the model underfits -- both curves rise beyond lam*, confirming that the signal is being penalised away along with the noise.

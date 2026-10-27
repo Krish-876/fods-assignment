@@ -1,0 +1,26 @@
+============================================================
+P2: Ridge Regression as MAP
+============================================================
+Train N=10, Test N=100
+
+--- Deliverable 1: Closed-form ridge (np.linalg.solve) ---
+
+--- Deliverable 2: GD agreement at lam=1e-2 ---
+  cond(Phi^T Phi)           = 2.3124e+14
+  cond(Phi^T Phi + lam I)   = 2.0381e+03  (lam=0.01)
+  The ridge penalty lam*I adds to every diagonal entry, raising the smallest singular value and thus shrinking the condition number.
+  GD converged at iteration 28227, rel_err=9.9968e-07
+  ||w_GD - w_closed||_2 / ||w_closed||_2 = 9.9968e-07
+  Saved: p2_d2_gd_convergence.png
+
+--- Deliverable 3: RMSE sweep vs lam ---
+  lam* = 1.7783e-07  ->  test RMSE = 0.114577
+  Interval where test RMSE <= 1.05 * min: [3.1623e-08, 1.0000e-04]
+  The minimum is fairly flat (broad plateau), meaning a range of lam values give near-optimal test RMSE. Below lam_lo the model overfits (train RMSE falls but test RMSE rises sharply); above lam_hi the model underfits (both train and test RMSE increase as weights are shrunk too aggressively).
+  Saved: p2_d3_rmse_sweep.png
+
+--- Deliverable 4: Fitted curves at lam=1e-10, lam*, lam=1e-2 ---
+  lam=1e-10 (overfit): actual lam=1.0000e-10, ||w||_2 = 3979.2246
+  lam=1.78e-07 (best): actual lam=1.7783e-07, ||w||_2 = 124.4946
+  lam=1e-2 (underfit): actual lam=1.0000e-02, ||w||_2 = 5.1079
+  Saved: p2_d4_fitted_curves.png

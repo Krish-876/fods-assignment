@@ -1,0 +1,23 @@
+============================================================
+P4: Bayesian Linear Regression
+============================================================
+Hyperparameters: alpha=0.05, beta=100.0, degree=3
+
+--- Deliverable 1: Posterior predictive for N=10 ---
+
+--- Deliverable 2: Equivalence m_N == w_MAP ---
+  lam = alpha/beta = 5.000000e-04
+  ||w_MAP - m_N||_2 = 1.1276e-12  (expect ~1e-12, machine precision)
+  Saved: p4_d1d2_predictive_N10.png  (includes w_MAP overlay)
+
+--- Deliverable 3: Interval width vs N ---
+  Irreducible floor 2*1.96/sqrt(beta) = 0.3920
+  N=5  : mean width=0.4952, max width=0.5494
+  N=10 : mean width=0.4491, max width=0.5244
+  N=20 : mean width=0.4242, max width=0.4863
+  N=50 : mean width=0.4064, max width=0.4417
+  Saved: p4_d3_interval_width.png
+
+--- Deliverable 4: Discussion ---
+
+  Discussion (P4): As N increases, the posterior covariance S_N = (alpha I + beta Phi^T Phi)^{-1} shrinks because Phi^T Phi grows roughly proportional to N, making the precision matrix S_N^{-1} increasingly dominated by the data term beta*Phi^T Phi. Consequently phi^T S_N phi -- the parameter uncertainty contribution to the predictive variance -- falls roughly like 1/N, and the interval width 2*1.96*s(x) approaches the irreducible floor from above. The irreducible floor 2*1.96/sqrt(beta) = 0.392 arises from the noise term 1/beta in s^2(x) = 1/beta + phi^T S_N phi: even with infinite data we cannot predict individual noisy observations more precisely than the noise level sigma = 1/sqrt(beta), so this term never disappears.

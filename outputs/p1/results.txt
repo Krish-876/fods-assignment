@@ -1,0 +1,77 @@
+============================================================
+P1: Polynomial Regression  |  Closed Form vs GD Family
+============================================================
+Random seed: 42
+Training points N=10
+
+--- Deliverable 1: Closed-form fits, condition numbers ---
+  d=1: cond(Phi) = 3.9849e+00
+  d=2: cond(Phi) = 1.9204e+01
+  d=3: cond(Phi) = 9.9026e+01
+  d=4: cond(Phi) = 5.4143e+02
+  d=5: cond(Phi) = 3.1696e+03
+  d=6: cond(Phi) = 2.0266e+04
+  d=7: cond(Phi) = 1.4628e+05
+  d=8: cond(Phi) = 1.2660e+06
+  d=9: cond(Phi) = 1.5193e+07
+  Saved: p1_d1_closed_form_fits.png
+
+--- Deliverable 2: QR reparametrisation, GD family (d=9) ---
+  Q shape: (10, 10), R shape: (10, 10)
+  Row norms of Q (should be ~1): [1. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+  Max off-diagonal of Q Q^T:     7.7716e-16  (confirms orthonormality)
+
+--- Deliverable 3: Loss curves (eta=0.1) ---
+  Saved: p1_d3_loss_curves.png
+  Epoch count used: 1200
+  Final E  Batch GD: 1.006972e-30
+  Final E  SGD:      1.291692e-29
+  Final E  Mini-GD:  1.562047e-29
+
+--- Deliverable 4: Learning-rate study ---
+
+  eta=0.01
+    w = [1.0717e-01 1.3484e+01 -2.6217e+02 2.4015e+03 -1.1151e+04 2.8913e+04
+ -4.4003e+04 3.9059e+04 -1.8683e+04 3.7124e+03]
+    Final E (epoch 100): 3.189640e-01
+
+  eta=0.1
+    w = [1.6905e-01 2.1268e+01 -4.1352e+02 3.7879e+03 -1.7588e+04 4.5604e+04
+ -6.9408e+04 6.1608e+04 -2.9468e+04 5.8557e+03]
+    Final E (epoch 100): 1.679595e-09
+
+  eta=2.1
+    w = [-2.3295e+03 -2.9307e+05 5.6983e+06 -5.2197e+07 2.4236e+08 -6.2843e+08
+ 9.5644e+08 -8.4896e+08 4.0607e+08 -8.0691e+07]
+    Final E (epoch 100): 4.521056e+08
+
+  Saved: p1_d4_lr_study.png
+
+  --- eta=2 special case ---
+  eta=2:  Final E = 2.380690e+00
+  E values at epochs 95-100: [2.38068979 2.38068979 2.38068979 2.38068979 2.38068979 2.38068979]
+  For the QR-reparametrised problem all curvatures == 1.
+  eta=2 => contraction |1 - eta*1| = 1 => loss oscillates / does not decrease.
+
+--- Deliverable 5: Verification at 2000 epochs (eta=0.1) ---
+
+  ||w_closed||_2 = 1.091784e+05
+  cond(R)        = 1.5193e+07  (amplifies alpha round-off when recovering w)
+
+  Method               ||w_GD - w_cf||_2      Relative error      
+  ------------------------------------------------------------
+  Batch GD             3.178392e-06           2.911191e-11        
+  SGD                  3.178918e-06           2.911674e-11        
+  Mini-batch GD        3.178157e-06           2.910976e-11        
+
+  All three variants agree with the closed form to
+  ~2.9e-11 relative error (~3.2e-06 absolute). The error floor
+  is shared by all variants and is set by cond(R) ~ 1.5e+07 amplifying
+  the O(eps_machine) round-off in alpha when w = R^{-1} alpha is recovered,
+  not by the choice of GD variant.
+
+--- Deliverable 6: Discussion ---
+  Row norms of Q:      [1. 1. 1. 1. 1. 1. 1. 1. 1. 1.]
+  Max off-diag Q Q^T:  7.7716e-16
+
+  Discussion (P1): The QR reparametrisation transforms the problem so that Q is a 10x10 orthogonal matrix and E(alpha)=0.5||Q alpha - t||^2 has curvature exactly 1 in every direction (Q^T Q = I). With eta=0.1 the per-direction contraction factor is |1 - eta| = 0.9 applied once per epoch regardless of which direction is updated. For Batch GD every direction is contracted once per epoch. For SGD each epoch visits all N=10 samples in a shuffled order; because Q is square orthogonal its rows are orthonormal, so sample n touches exactly one direction in the alpha space with the same contraction 1-eta=0.9. After N=10 single-sample steps (one per epoch) every direction has been updated exactly once with the same factor, making SGD per-epoch identical to Batch GD on the loss curve. Mini-batch GD is visibly slower on the loss curve because each update averages the gradient over the batch size b (here b=3 or b=1 for the last batch), giving an effective step size of eta/b per sample -- smaller effective progress per epoch. The last batch of size 1 receives a full (non-averaged) step, but the three batches of size 3 only make 1/3 of the progress of a full step, so convergence is slower overall as visible in the D3 plot. These claims are confirmed numerically: row norms of Q are all 1.0 (max deviation 7.77e-16). The 2000-epoch verification (D5) shows all three variants agree with the closed-form solution to ~2.9e-11 relative error (~3.2e-06 absolute). This shared error floor comes from cond(R) ~ 1.5e+07 amplifying O(eps_machine) round-off in alpha when w = R^{-1} alpha is recovered; it is not caused by the GD variant.
