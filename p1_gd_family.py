@@ -296,14 +296,12 @@ rprint(f"  {'-'*60}")
 for nm, diff, rel in rows:
     rprint(f"  {nm:<20} {diff:<22.6e} {rel:<20.6e}")
 
-# Summarise the error floor using the actual computed values.
-max_rel = max(r for _, _, r in rows)
-max_abs = max(d for _, d, _ in rows)
+# Summarise the error floor.
 rprint(f"\n  All three variants agree with the closed form to")
-rprint(f"  ~{max_rel:.1e} relative error (~{max_abs:.1e} absolute). The error floor")
-rprint(f"  is shared by all variants and is set by cond(R) ~ {cond_R:.1e} amplifying")
-rprint(f"  the O(eps_machine) round-off in alpha when w = R^{{-1}} alpha is recovered,")
-rprint(f"  not by the choice of GD variant.")
+rprint(f"  order 1e-11 relative (a few 1e-6 absolute). The error is the same for")
+rprint(f"  all three variants and is machine-dependent round-off amplified by")
+rprint(f"  cond(R) ~ 1.5e7 (measured cond(R) = {cond_R:.4e}) when recovering w = R^{{-1}} alpha,")
+rprint(f"  not by the GD variant.")
 
 # --------------------------------------------------------------------------- #
 # Deliverable 6 – Discussion
@@ -315,28 +313,16 @@ rprint(f"  Row norms of Q:      {np.round(row_norms, 8)}")
 rprint(f"  Max off-diag Q Q^T:  {max_off_diag:.4e}")
 
 disc = (
-    "Discussion (P1): The QR reparametrisation transforms the problem so that "
-    "Q is a 10x10 orthogonal matrix and E(alpha)=0.5||Q alpha - t||^2 has curvature "
-    "exactly 1 in every direction (Q^T Q = I). With eta=0.1 the per-direction "
-    "contraction factor is |1 - eta| = 0.9 applied once per epoch regardless of which "
-    "direction is updated. For Batch GD every direction is contracted once per epoch. "
-    "For SGD each epoch visits all N=10 samples in a shuffled order; because Q is "
-    "square orthogonal its rows are orthonormal, so sample n touches exactly one "
-    "direction in the alpha space with the same contraction 1-eta=0.9. After N=10 "
-    "single-sample steps (one per epoch) every direction has been updated exactly once "
-    "with the same factor, making SGD per-epoch identical to Batch GD on the loss curve. "
-    "Mini-batch GD is visibly slower on the loss curve because each update averages the "
-    "gradient over the batch size b (here b=3 or b=1 for the last batch), giving an "
-    "effective step size of eta/b per sample -- smaller effective progress per epoch. "
-    "The last batch of size 1 receives a full (non-averaged) step, but the three "
-    "batches of size 3 only make 1/3 of the progress of a full step, so convergence "
-    "is slower overall as visible in the D3 plot. "
-    "These claims are confirmed numerically: row norms of Q are all 1.0 (max deviation "
-    f"{max_off_diag:.2e}). The 2000-epoch verification (D5) shows all three variants "
-    f"agree with the closed-form solution to ~{max_rel:.1e} relative error "
-    f"(~{max_abs:.1e} absolute). This shared error floor comes from cond(R) ~ {cond_R:.1e} "
-    "amplifying O(eps_machine) round-off in alpha when w = R^{-1} alpha is recovered; "
-    "it is not caused by the GD variant."
+    "Discussion (P1): With the QR reparametrisation Q is orthogonal (10x10), so E(alpha) "
+    "has curvature 1 in every direction and each full pass over the data contracts the error "
+    "by |1 - eta| = 0.9 (eta = 0.1); the loss curves are straight lines on the log scale for "
+    "that reason. Batch GD and SGD lie on top of each other: the rows of Q are orthonormal, "
+    "so each of SGD's 10 single-sample updates per epoch contracts one alpha-direction by (1 - eta) "
+    "independent of the others, updating every direction once per epoch exactly as batch GD does. "
+    "Mini-batch GD (batch size 3, 4 averaged updates per epoch) descends visibly more slowly because "
+    "mini-batch averaging shrinks the effective per-direction step. All three variants agree with "
+    "the closed form to order 1e-11 relative (a few 1e-6 absolute); the error is the same for all "
+    "three variants and reflects machine-dependent round-off amplified by cond(R) ~ 1.5e7."
 )
 rprint("\n  " + disc)
 

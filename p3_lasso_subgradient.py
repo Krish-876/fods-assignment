@@ -7,7 +7,8 @@ Lasso via subgradient descent in the Legendre polynomial basis.
   Objective: E(w) = 0.5||Phi w - t||^2 + lam*||w||_1
   Update:   w <- w - eta*(Phi^T(Phi w - t) + lam*sign(w))
   eta=0.05, w0=0, 20000 iterations per lam.
-  A coefficient w_j is ~0 iff |w_j| < 2*eta*lam.
+  General P3 approximate-zero threshold: |w_j| < 2*eta*lam (evaluated across P3).
+  P3 Deliverable 5 Lasso-Ridge comparison threshold: |w_j| < 0.01 (fixed comparison).
 
 Run:  python p3_lasso_subgradient.py [--show]
 """
@@ -66,6 +67,7 @@ rprint(f"cond(Phi^T Phi) = {cond_PtP:.4e}  (expect ~6e2)")
 lams = np.logspace(-4, 0, 21)
 
 def zero_thresh(lam):
+    # General P3 approximate-zero threshold: |w_j| < 2*eta*lam (equals 0.01 at lam=0.1 since eta=0.05)
     return 2 * ETA * lam
 
 def lasso_obj(w, Phi, t, lam):
@@ -265,6 +267,7 @@ lam_star_ridge   = lams[best_ridge_idx]
 w_star_ridge     = ridge_legendre(lam_star_ridge)
 best_test_ridge  = ridge_test_rmses[best_ridge_idx]
 
+# P3 Deliverable 5 Lasso–Ridge comparison threshold: fixed at |w_j| < 0.01
 SMALL = 0.01
 n_small_lasso = int(np.sum(np.abs(w_star_lasso) < SMALL))
 n_small_ridge = int(np.sum(np.abs(w_star_ridge) < SMALL))
@@ -321,21 +324,24 @@ rprint(f"  Monotonicity check for lam >= lam* = {lam_star_lasso:.4e}:")
 rprint(f"    train RMSE strictly non-decreasing: {train_mono} -> phrase: '{train_adv}'")
 rprint(f"    test  RMSE strictly non-decreasing: {test_mono}  -> phrase: '{test_adv}'")
 
+# Compute citations from coefficient path (D3) and comparison table (D5)
+idx_01 = int(np.argmin(np.abs(lams - 0.1)))
+n_zero_01 = int(np.sum(np.abs(W_path[idx_01]) < zero_thresh(lams[idx_01])))
+n_zero_max = int(np.sum(np.abs(W_path[-1]) < zero_thresh(lams[-1])))
+lam_max = lams[-1]
+
 disc = (
-    "Discussion (P3): L1 regularisation (Lasso) produces exact zeros in the "
-    "coefficient vector because the subdifferential optimality condition for a "
-    "zero component j requires |Phi_j^T r| <= lam -- if the correlation of "
-    "column j with the residual is small enough, the optimal solution is exactly "
-    "w_j=0, i.e. the diamond-shaped L1 ball forces the solution to touch a "
-    "corner/edge where some coordinates are zero. L2 regularisation (Ridge) only "
-    "shrinks coefficients toward zero but generically never reaches exactly zero, "
-    "because the L2 ball is smooth (no corners) and its gradient is proportional to "
-    "w, becoming zero only if w=0 itself. As lam grows past lam* "
-    f"(lam*={lam_star_lasso:.2e} for Lasso), more coefficients are driven to zero, "
-    "reducing model flexibility: the train RMSE tends to " + train_adv + " because the model "
-    "cannot fit the data well, and the test RMSE tends to " + test_adv + " because the model "
-    "underfits -- both curves rise beyond lam*, confirming that the signal is being "
-    "penalised away along with the noise."
+    "Discussion (P3): L1 regularisation (Lasso) produces exact zeros because the "
+    "subdifferential optimality condition for w_j=0 requires |Phi_j^T r| <= lam, where the "
+    "diamond-shaped L1 ball forces solutions to touch coordinate axes, whereas the smooth L2 "
+    "ball in Ridge only shrinks weights without setting them to zero. The coefficient path (D3) "
+    f"demonstrates this progressive pruning: the number of ~zero coefficients (|w_j| < 2*eta*lam) "
+    f"grows from 0 at small lam to {n_zero_01} at lam=0.1, reaching {n_zero_max} at the largest "
+    f"lam={lam_max:.1e}. In the D5 comparison on the Legendre basis, Lasso achieves a test RMSE of "
+    f"{best_test_lasso:.6f} with {n_small_lasso} coefficients having |w_j| < 0.01, whereas Ridge "
+    f"yields a test RMSE of {best_test_ridge:.6f} with only {n_small_ridge} coefficient below 0.01. "
+    f"Beyond lam*={lam_star_lasso:.2e}, excessive regularisation removes true signal, so train RMSE and "
+    f"test RMSE both {train_adv} as the model underfits."
 )
 rprint("\n  " + disc)
 

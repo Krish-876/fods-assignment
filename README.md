@@ -3,7 +3,7 @@
 | Name | ID |
 |---|---|
 | B.N.R. Krishna | 2024A7PS0175H |
-| Sudhanva B H | 20240085H |
+| Sudhanva B H | 2024A7PS0085H |
 
 Polynomial regression, ridge/lasso regularisation, and Bayesian regression,
 implemented from scratch in NumPy (no scikit-learn).
@@ -28,6 +28,7 @@ fods-assignment/
   p4_bayesian_regression.py  # P4: Bayesian linear regression
   requirements.txt
   README.md
+  report.tex                 # LaTeX report source
   outputs/
     p1/                      # figures + results.txt for P1
     p2/                      # figures + results.txt for P2
@@ -43,13 +44,18 @@ fods-assignment/
 
 ## Setup
 
-A virtual environment already exists at `.venv`. Activate it, then install dependencies:
+Create a fresh virtual environment and install the required dependencies:
 
 ```powershell
-# Activate the existing venv
-.\.venv\Scripts\Activate.ps1
+# Create a fresh virtual environment
+python -m venv .venv
 
-# Install exact versions
+# Activate the virtual environment
+# On Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+# (On Linux/macOS: source .venv/bin/activate)
+
+# Install required dependencies
 pip install -r requirements.txt
 ```
 
@@ -57,7 +63,7 @@ pip install -r requirements.txt
 
 ## How to Run
 
-Run each problem script from the project root:
+Run each problem script from the project root using the activated virtual environment:
 
 ```powershell
 # P1 – Polynomial regression, closed-form vs GD family
@@ -73,24 +79,18 @@ python p3_lasso_subgradient.py
 python p4_bayesian_regression.py
 ```
 
+### Run all problems sequentially
+
+```powershell
+python p1_gd_family.py; python p2_ridge_map.py; python p3_lasso_subgradient.py; python p4_bayesian_regression.py
+```
+
 ### `--show` flag (interactive display)
 
 Append `--show` to display figures interactively after saving:
 
 ```powershell
 python p1_gd_family.py --show
-```
-
-### Build the report
-
-```powershell
-.\.venv\Scripts\python.exe build_report.py   # writes report.html (+ report.pdf if Edge/pandoc is available)
-```
-
-### Run all problems
-
-```powershell
-python p1_gd_family.py; python p2_ridge_map.py; python p3_lasso_subgradient.py; python p4_bayesian_regression.py
 ```
 
 ---
@@ -153,8 +153,12 @@ P2, P3, P4 are deterministic (no random sampling).
   `np.linalg.lstsq` (P1 closed form) or `np.linalg.solve` (P2, P4). The
   posterior covariance `S_N = inv(S_N_inv)` in P4 is computed via
   `np.linalg.inv` (acceptable for predictive variance).
-- **~0 threshold (P3):** A Lasso coefficient w_j is counted as effectively zero
-  iff |w_j| < 2·η·λ (twice the subgradient step times regularisation strength).
+- **~0 threshold (P3):**
+  - **General P3 approximate-zero threshold:** A Lasso coefficient $w_j$ is counted
+    as effectively zero iff $|w_j| < 2\eta\lambda$ (where $\eta = 0.05$; evaluates
+    to $0.01$ specifically when $\lambda = 0.1$).
+  - **P3 Deliverable 5 Lasso–Ridge comparison threshold:** A fixed threshold of
+    $|w_j| < 0.01$ is used to compare sparsity between Lasso and Ridge.
 - **Condition numbers (P1):** cond(Phi) ≈ 1.5×10⁷ at d=9, confirming severe
   ill-conditioning of the raw Vandermonde matrix.
 - **cond(Phi^T Phi) (P2):** ≈ 2.3×10¹⁴ without penalty; drops to ≈ 2×10³ at λ=0.01.
